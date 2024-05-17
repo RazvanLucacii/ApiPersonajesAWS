@@ -1,6 +1,7 @@
 ﻿using ApiPersonajesAWS.Data;
 using ApiPersonajesAWS.Models;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace ApiPersonajesAWS.Repositories
 {
@@ -44,6 +45,37 @@ namespace ApiPersonajesAWS.Repositories
             this.context.Personajes.Add(personaje);
             await this.context.SaveChangesAsync();
         }
-    }
 
+        public async Task<Personaje?> UpdatePersonajeAsync(int id, string nombre, string imagen)
+        {
+            Personaje? personaje = null;
+            using (MySqlConnection conn = new MySqlConnection(this.context.Database.GetConnectionString()))
+            {
+                conn.Open();
+                using (MySqlCommand com = new MySqlCommand("Update_Personaje", conn))
+                {
+                    com.CommandType = System.Data.CommandType.StoredProcedure;
+                    com.Parameters.AddWithValue("@idpersonaje", id);
+                    com.Parameters.AddWithValue("@nombre", nombre);
+                    com.Parameters.AddWithValue("@imagen", imagen);
+
+                    using (MySqlDataReader reader = com.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            personaje = new Personaje
+                            {
+                                IdPersonaje = int.Parse(reader["IDPERSONAJE"].ToString()!),
+                                Nombre = reader["PERSONAJE"].ToString()!,
+                                Imagen = reader["IMAGEN"].ToString()!,
+                            };
+                        }
+                    }
+                }
+            }
+            return personaje;
+        }
+    }
 }
+
+
